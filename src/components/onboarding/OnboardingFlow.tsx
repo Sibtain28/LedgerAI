@@ -410,36 +410,36 @@ export function OnboardingFlow() {
               <div className="flex flex-col gap-3">
                 <div className="flex items-start text-muted">
                   <span className="mr-3 text-primary font-bold">{'>'}</span>
-                  <span>Mounting audit container configuration...</span>
+                  <span>Initializing deterministic audit sequence...</span>
                 </div>
                 {analysisStep > 0 && (
                   <div className="flex items-start text-muted">
                     <span className="mr-3 text-primary font-bold">{'>'}</span>
-                    <span>Compiling vendor linkage keys [{selectedVendors.join(", ")}]... OK</span>
+                    <span>Reconciling tool stack [{selectedVendors.join(", ")}]... OK</span>
                   </div>
                 )}
                 {analysisStep > 1 && (
                   <div className="flex items-start text-muted">
                     <span className="mr-3 text-primary font-bold">{'>'}</span>
-                    <span>Allocating historical analysis bounds (${parsedSpend.toLocaleString()}/mo baseline)... OK</span>
+                    <span>Analyzing seat utilization vs compute allocation... OK</span>
                   </div>
                 )}
                 {analysisStep > 2 && (
                   <div className="flex items-start text-muted">
                     <span className="mr-3 text-primary font-bold">{'>'}</span>
-                    <span>Configuring topology heuristics for {selectedUseCases.length} use cases... OK</span>
+                    <span>Detecting redundant subscription overlaps... OK</span>
                   </div>
                 )}
                 {analysisStep > 3 && (
                   <div className="flex items-start text-muted">
                     <span className="mr-3 text-primary font-bold">{'>'}</span>
-                    <span>Validating engine integrity... {step === 4 && <span className="animate-pulse">█</span>}</span>
+                    <span>Calculating leakage heuristics for {selectedUseCases.length} use cases... {step === 4 && <span className="animate-pulse">█</span>}</span>
                   </div>
                 )}
                 {analysisStep > 4 && (
                   <div className="flex items-start text-primary font-semibold mt-4 pt-4 border-t border-background/20">
                     <span className="mr-3 font-bold">{'>'}</span>
-                    <span>[SYS_READY] Ledger node successfully provisioned.</span>
+                    <span>[SYS_READY] Audit profile serialized to archival ledger.</span>
                   </div>
                 )}
               </div>

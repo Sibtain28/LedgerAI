@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/Container";
 import { ArrowRight, Terminal } from "lucide-react";
+import { SAMPLE_AUDIT_ID } from "@/lib/audit/sample";
 
 export function Hero() {
   const [step, setStep] = useState(0);
@@ -60,9 +61,11 @@ export function Hero() {
                   Request an Audit <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="h-14 px-8 text-sm uppercase tracking-widest font-semibold bg-transparent shadow-none border-foreground/20 hover:bg-muted/50">
-                View Sample Report
-              </Button>
+              <Link href={`/dashboard?id=${SAMPLE_AUDIT_ID}`}>
+                <Button size="lg" variant="outline" className="w-full h-14 px-8 text-sm uppercase tracking-widest font-semibold bg-transparent shadow-none border-foreground/20 hover:bg-muted/50">
+                  View Sample Report
+                </Button>
+              </Link>
             </div>
             <div className="flex items-center gap-5 mt-10 text-xs text-muted-foreground font-mono uppercase tracking-wider">
               <div className="flex -space-x-3">
@@ -80,61 +83,61 @@ export function Hero() {
             <div className="bg-foreground border border-border shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-1000 text-background flex flex-col h-[400px]">
               <div className="bg-background/10 border-b border-background/20 px-5 py-3 flex items-center gap-3 shrink-0">
                 <Terminal className="h-4 w-4 text-muted" />
-                <span className="text-xs font-mono text-muted font-medium tracking-widest uppercase">audit_initialization.sh</span>
+                <span className="text-xs font-mono text-muted font-medium tracking-widest uppercase">audit_engine.sh</span>
               </div>
               <div className="p-6 font-mono text-[13px] leading-relaxed overflow-y-auto flex-1 custom-scrollbar">
                 <div className="flex flex-col gap-2.5">
                   <div className="flex items-start text-muted">
                     <span className="mr-3 text-primary font-bold">{'>'}</span>
-                    <span><span className="text-muted-foreground/70">[SYS]</span> Initializing secure connection to AWS Billing API (us-east-1)... {step === 0 && <span className="animate-pulse">█</span>}{step > 0 && "OK"}</span>
+                    <span><span className="text-muted-foreground/70">[SYS]</span> Initializing deterministic audit sequence... {step === 0 && <span className="animate-pulse">█</span>}{step > 0 && "OK"}</span>
                   </div>
                   
                   {step >= 1 && (
                     <div className="flex items-start text-muted animate-in fade-in duration-300">
                       <span className="mr-3 text-primary font-bold">{'>'}</span>
-                      <span><span className="text-muted-foreground/70">[AUTH]</span> Validating IAM roles [arn:aws:iam::***:role/AuditAdmin]... {step === 1 && <span className="animate-pulse">█</span>}{step > 1 && "OK"}</span>
+                      <span><span className="text-muted-foreground/70">[RECON]</span> Reconciling OpenAI organization tokens... {step === 1 && <span className="animate-pulse">█</span>}{step > 1 && "OK"}</span>
                     </div>
                   )}
 
                   {step >= 2 && (
                     <div className="flex items-start text-muted animate-in fade-in duration-300">
                       <span className="mr-3 text-primary font-bold">{'>'}</span>
-                      <span><span className="text-muted-foreground/70">[INGEST]</span> Connecting to OpenAI org [org-9a8B...]... {step === 2 && <span className="animate-pulse">█</span>}{step > 2 && "OK"}</span>
+                      <span><span className="text-muted-foreground/70">[RECON]</span> Analyzing Anthropic workspace utilization... {step === 2 && <span className="animate-pulse">█</span>}{step > 2 && "OK"}</span>
                     </div>
                   )}
 
                   {step >= 3 && (
                     <div className="flex items-start text-muted animate-in fade-in duration-300">
                       <span className="mr-3 text-primary font-bold">{'>'}</span>
-                      <span><span className="text-muted-foreground/70">[INGEST]</span> Connecting to Anthropic workspace [wrk-442C...]... {step === 3 && <span className="animate-pulse">█</span>}{step > 3 && "OK"}</span>
+                      <span><span className="text-muted-foreground/70">[RECON]</span> Detecting Perplexity subscription overlaps... {step === 3 && <span className="animate-pulse">█</span>}{step > 3 && "OK"}</span>
                     </div>
                   )}
 
                   {step >= 4 && (
                     <div className="flex items-start text-muted animate-in fade-in duration-300 mt-2">
                       <span className="mr-3 text-primary font-bold">{'>'}</span>
-                      <span><span className="text-muted-foreground/70">[ANALYZE]</span> Mapping token usage against active Kubernetes pods... {step === 4 && <span className="animate-pulse">█</span>}</span>
+                      <span><span className="text-muted-foreground/70">[ANALYZE]</span> Mapping seat allocation vs active API keys... {step === 4 && <span className="animate-pulse">█</span>}</span>
                     </div>
                   )}
 
                   {step >= 5 && (
                     <div className="flex items-start text-red-400 animate-in fade-in duration-300">
                       <span className="mr-3 font-bold">{'>'}</span>
-                      <span><span className="text-red-400/70">[WARN]</span> Anomaly: High volume `claude-3-opus` calls from deprecated namespace. {step === 5 && <span className="animate-pulse">█</span>}</span>
+                      <span><span className="text-red-400/70">[WARN]</span> Redundancy: Duplicate Cursor/Copilot licenses in 12 seats. {step === 5 && <span className="animate-pulse">█</span>}</span>
                     </div>
                   )}
 
                   {step >= 6 && (
                     <div className="flex items-start text-red-400 animate-in fade-in duration-300">
                       <span className="mr-3 font-bold">{'>'}</span>
-                      <span><span className="text-red-400/70">[WARN]</span> Anomaly: Missing prompt caching headers on 42% of `gpt-4o` requests. {step === 6 && <span className="animate-pulse">█</span>}</span>
+                      <span><span className="text-red-400/70">[WARN]</span> Leakage: Orphaned ChatGPT Team seats detected (8 total). {step === 6 && <span className="animate-pulse">█</span>}</span>
                     </div>
                   )}
 
                   {step >= 7 && (
                     <div className="flex items-start text-muted animate-in fade-in duration-300 mt-2">
                       <span className="mr-3 text-primary font-bold">{'>'}</span>
-                      <span><span className="text-muted-foreground/70">[CALC]</span> Quantifying financial impact... {step === 7 && <span className="animate-pulse">█</span>}</span>
+                      <span><span className="text-muted-foreground/70">[CALC]</span> Calculating annual optimization score... {step === 7 && <span className="animate-pulse">█</span>}</span>
                     </div>
                   )}
 
@@ -145,12 +148,12 @@ export function Hero() {
                         <span><span className="text-primary/70">[SUCCESS]</span> Audit Complete. Potential savings identified: {step === 8 && <span className="animate-pulse">█</span>}</span>
                         {step >= 9 && (
                           <div className="mt-2 text-background grid grid-cols-[1fr_auto] gap-x-8 gap-y-1 text-sm font-medium">
-                            <span className="opacity-80">Orphaned staging keys:</span>
+                            <span className="opacity-80">Redundant licenses:</span>
                             <span className="text-right">$2,140.00/mo</span>
-                            <span className="opacity-80">Prompt redundancy:</span>
+                            <span className="opacity-80">Orphaned seat leakage:</span>
                             <span className="text-right">$3,400.00/mo</span>
-                            <span className="border-t border-background/20 pt-1 mt-1 font-bold">Total identified:</span>
-                            <span className="border-t border-background/20 pt-1 mt-1 text-right font-bold">$5,540.00/mo</span>
+                            <span className="border-t border-background/20 pt-1 mt-1 font-bold">Annual potential:</span>
+                            <span className="border-t border-background/20 pt-1 mt-1 text-right font-bold">$66,480.00</span>
                           </div>
                         )}
                       </div>

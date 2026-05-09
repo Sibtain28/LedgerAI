@@ -12,6 +12,7 @@ import { exportAuditToPDF } from "@/lib/audit/export";
 import { Download, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { createClient } from "@/utils/supabase/client";
+import { SAMPLE_AUDIT_ID, SAMPLE_AUDIT_RECORD } from "@/lib/audit/sample";
 
 function SkeletonReport() {
   return (
@@ -68,6 +69,15 @@ export function AuditReport({ id }: { id?: string }) {
       const targetId = id || localStorage.getItem("ledger_current_audit_id") || (history[0]?.id);
       
       if (!targetId) {
+        setLoading(false);
+        return;
+      }
+
+      // 0. Handle Sample ID (First class citizen)
+      if (targetId === SAMPLE_AUDIT_ID) {
+        setData(SAMPLE_AUDIT_RECORD.data);
+        setReport(SAMPLE_AUDIT_RECORD.result);
+        setCurrentId(SAMPLE_AUDIT_ID);
         setLoading(false);
         return;
       }
