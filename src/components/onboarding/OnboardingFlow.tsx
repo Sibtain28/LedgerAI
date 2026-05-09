@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { ArrowRight, Check, Terminal, Cpu, Users, Database } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { evaluateAuditData } from "@/lib/audit/engine";
+import { AuditRecord } from "@/lib/audit/types";
 
 const VENDORS = [
   { id: "openai", name: "OpenAI API", label: "GPT-4 / O1 Models" },
@@ -66,14 +68,33 @@ export function OnboardingFlow() {
   const estimatedLeakage = parsedSpend > 0 ? (parsedSpend * 0.32).toLocaleString("en-US", { style: "currency", currency: "USD" }) : "$0.00";
 
   const handleFinish = () => {
-    const data = {
+    const auditData = {
       vendors: selectedVendors,
       spend: parsedSpend,
       seats: parseInt(seats) || 0,
       useCases: selectedUseCases
     };
-    localStorage.setItem("ledger_audit_data", JSON.stringify(data));
-    router.push("/dashboard");
+
+    const auditId = `LDG-${Math.floor(1000 + Math.random() * 9000)}`;
+    const result = evaluateAuditData(auditData);
+    
+    const record: AuditRecord = {
+      id: auditId,
+      timestamp: new Date().toISOString(),
+      data: auditData,
+      result: result
+    };
+
+    // Save to history
+    const historyJson = localStorage.getItem("ledger_audit_history");
+    const history: AuditRecord[] = historyJson ? JSON.parse(historyJson) : [];
+    history.unshift(record); // Add to beginning
+    localStorage.setItem("ledger_audit_history", JSON.stringify(history));
+    
+    // Set current ID for the dashboard
+    localStorage.setItem("ledger_current_audit_id", auditId);
+    
+    router.push(`/dashboard?id=${auditId}`);
   };
 
   useEffect(() => {

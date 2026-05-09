@@ -21,16 +21,10 @@ export function Header() {
                 Dashboard
               </Link>
               <Link
-                href="/audit"
+                href="/history"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                Audits
-              </Link>
-              <Link
-                href="/settings"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Settings
+                History
               </Link>
             </nav>
           </div>

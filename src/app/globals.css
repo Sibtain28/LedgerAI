@@ -134,6 +134,20 @@
   }
 }
 
+.exporting-pdf {
+  font-family: 'Inter', sans-serif !important;
+}
+
+.exporting-pdf * {
+  animation: none !important;
+  transition: none !important;
+  box-shadow: none !important;
+}
+
+.exporting-pdf .bg-grid-pattern {
+  opacity: 0.05 !important;
+}
+
 @layer utilities {
   .bg-grid-pattern {
     background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
