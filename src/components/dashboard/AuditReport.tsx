@@ -11,6 +11,7 @@ import { AuditData, EngineResult, AuditRecord } from "@/lib/audit/types";
 import { exportAuditToPDF } from "@/lib/audit/export";
 import { Download, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { supabase } from "@/lib/supabase";
 
 function SkeletonReport() {
   return (
@@ -54,34 +55,69 @@ export function AuditReport({ id }: { id?: string }) {
   const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setHasMounted(true);
-    const historyJson = localStorage.getItem("ledger_audit_history");
-    if (historyJson) {
+    async function loadAudit() {
+      setHasMounted(true);
+      setError(null);
+      
+      const historyJson = localStorage.getItem("ledger_audit_history");
+      let history: AuditRecord[] = historyJson ? JSON.parse(historyJson) : [];
+      
+      const targetId = id || localStorage.getItem("ledger_current_audit_id") || (history[0]?.id);
+      
+      if (!targetId) {
+        setLoading(false);
+        return;
+      }
+
+      // 1. Try LocalStorage
+      let record = history.find(r => r.id === targetId);
+      
+      if (record) {
+        setData(record.data);
+        setReport(record.result);
+        setCurrentId(record.id);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Fallback to Supabase
       try {
-        const history: AuditRecord[] = JSON.parse(historyJson);
-        
-        let record: AuditRecord | undefined;
-        
-        if (id) {
-          record = history.find(r => r.id === id);
-        } else {
-          // Fallback to current ID or latest
-          const lastId = localStorage.getItem("ledger_current_audit_id");
-          record = history.find(r => r.id === lastId) || history[0];
+        const { data: remoteData, error: remoteError } = await supabase
+          .from("audits")
+          .select("*")
+          .eq("id", targetId)
+          .single();
+
+        if (remoteError || !remoteData) {
+          throw new Error("Report not found in archival ledger.");
         }
 
-        if (record) {
-          setData(record.data);
-          setReport(record.result);
-          setCurrentId(record.id);
-        }
-      } catch (e) {
-        console.error("Failed to parse audit history");
+        const remoteRecord: AuditRecord = {
+          id: remoteData.id,
+          timestamp: remoteData.created_at,
+          data: remoteData.data,
+          result: remoteData.result
+        };
+
+        // Sync to localStorage
+        history.unshift(remoteRecord);
+        localStorage.setItem("ledger_audit_history", JSON.stringify(history));
+
+        setData(remoteRecord.data);
+        setReport(remoteRecord.result);
+        setCurrentId(remoteRecord.id);
+      } catch (e: any) {
+        console.error("Failed to load audit:", e);
+        setError(e.message);
+      } finally {
+        setLoading(false);
       }
     }
-    setLoading(false);
+
+    loadAudit();
   }, [id]);
 
   const handleDownload = async () => {
@@ -93,6 +129,24 @@ export function AuditReport({ id }: { id?: string }) {
 
   if (!hasMounted || loading) {
     return <SkeletonReport />;
+  }
+
+  if (error) {
+    return (
+      <Container className="py-32">
+        <div className="max-w-2xl mx-auto text-center space-y-8">
+          <div className="inline-flex items-center border border-red-500/20 bg-red-500/10 px-4 py-1.5 text-xs font-mono font-bold uppercase tracking-widest text-red-500">
+            Fetch Error
+          </div>
+          <h1 className="text-4xl font-semibold tracking-tighter text-foreground">{error}</h1>
+          <Link href="/onboarding">
+            <Button size="lg" className="h-14 px-8 uppercase tracking-widest font-semibold shadow-none">
+              Initialize New Audit <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </Container>
+    );
   }
 
   if (!data || !report || data.spend === 0) {

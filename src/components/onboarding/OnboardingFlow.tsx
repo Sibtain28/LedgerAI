@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { evaluateAuditData } from "@/lib/audit/engine";
 import { AuditRecord } from "@/lib/audit/types";
+import { supabase } from "@/lib/supabase";
 
 const VENDORS = [
   { id: "openai", name: "OpenAI API", label: "GPT-4 / O1 Models" },
@@ -67,7 +68,7 @@ export function OnboardingFlow() {
   const parsedSpend = parseInt(monthlySpend.replace(/[^0-9]/g, "")) || 0;
   const estimatedLeakage = parsedSpend > 0 ? (parsedSpend * 0.32).toLocaleString("en-US", { style: "currency", currency: "USD" }) : "$0.00";
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     const auditData = {
       vendors: selectedVendors,
       spend: parsedSpend,
@@ -85,7 +86,7 @@ export function OnboardingFlow() {
       result: result
     };
 
-    // Save to history
+    // 1. Save to history (localStorage)
     const historyJson = localStorage.getItem("ledger_audit_history");
     const history: AuditRecord[] = historyJson ? JSON.parse(historyJson) : [];
     history.unshift(record); // Add to beginning
@@ -93,6 +94,28 @@ export function OnboardingFlow() {
     
     // Set current ID for the dashboard
     localStorage.setItem("ledger_current_audit_id", auditId);
+
+    // 2. Persist to Supabase
+    try {
+      const { error: auditError } = await supabase
+        .from("audits")
+        .insert({
+          id: auditId,
+          data: auditData,
+          result: result
+        });
+
+      if (!auditError) {
+        await supabase
+          .from("leads")
+          .insert({
+            audit_id: auditId,
+            metadata: { source: "onboarding_flow" }
+          });
+      }
+    } catch (e) {
+      console.error("Failed to persist to Supabase:", e);
+    }
     
     router.push(`/dashboard?id=${auditId}`);
   };
