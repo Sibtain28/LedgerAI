@@ -10,6 +10,42 @@ import { VENDOR_REGISTRY } from "@/lib/audit/config";
 import { AuditData, EngineResult, AuditRecord } from "@/lib/audit/types";
 import { exportAuditToPDF } from "@/lib/audit/export";
 import { Download, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+function SkeletonReport() {
+  return (
+    <div className="pb-32 animate-in fade-in duration-500">
+      <div className="bg-foreground py-24 border-b border-border">
+        <Container>
+          <div className="flex flex-col md:flex-row justify-between items-start gap-12">
+            <div className="space-y-6 flex-1">
+              <Skeleton className="h-6 w-48 bg-background/10" />
+              <Skeleton className="h-20 w-3/4 bg-background/10" />
+              <Skeleton className="h-6 w-32 bg-background/10" />
+            </div>
+            <div className="grid grid-cols-2 gap-8 bg-background/5 p-8 border border-background/10 shrink-0">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-3 w-24 bg-background/10" />
+                  <Skeleton className="h-8 w-32 bg-background/10" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </div>
+      <Container className="py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+          <div className="lg:col-span-2 space-y-6">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </Container>
+    </div>
+  );
+}
 
 export function AuditReport({ id }: { id?: string }) {
   const [data, setData] = useState<AuditData | null>(null);
@@ -17,8 +53,10 @@ export function AuditReport({ id }: { id?: string }) {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
+    setHasMounted(true);
     const historyJson = localStorage.getItem("ledger_audit_history");
     if (historyJson) {
       try {
@@ -53,8 +91,8 @@ export function AuditReport({ id }: { id?: string }) {
     setIsExporting(false);
   };
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center font-mono">Loading ledger...</div>;
+  if (!hasMounted || loading) {
+    return <SkeletonReport />;
   }
 
   if (!data || !report || data.spend === 0) {

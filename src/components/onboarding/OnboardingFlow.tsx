@@ -143,7 +143,7 @@ export function OnboardingFlow() {
             {step === 1 && (
               <div className="space-y-8">
                 <div>
-                  <h1 className="text-3xl font-semibold tracking-tighter text-foreground">Core Infrastructure</h1>
+                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tighter text-foreground">Core Infrastructure</h1>
                   <p className="mt-4 text-muted-foreground">Select the intelligence providers currently in your stack. We'll cross-reference these against your billing APIs.</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -153,6 +153,8 @@ export function OnboardingFlow() {
                       <button
                         key={v.id}
                         onClick={() => toggleVendor(v.id)}
+                        aria-pressed={isSelected}
+                        aria-label={`Toggle ${v.name}`}
                         className={`flex flex-col text-left p-5 border transition-all duration-200 shadow-sm ${isSelected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-foreground/30'}`}
                       >
                         <div className="flex justify-between items-start mb-2">
@@ -223,8 +225,8 @@ export function OnboardingFlow() {
             {step === 3 && (
               <div className="space-y-8">
                 <div>
-                  <h1 className="text-3xl font-semibold tracking-tighter text-foreground">Primary Use Cases</h1>
-                  <p className="mt-4 text-muted-foreground">How is your compute primarily distributed? This helps us identify caching optimization opportunities.</p>
+                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tighter text-foreground font-sans">Primary Use Cases</h1>
+                  <p className="mt-4 text-muted-foreground font-sans">How is your compute primarily distributed? This helps us identify caching optimization opportunities.</p>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   {USE_CASES.map(u => {
@@ -233,23 +235,34 @@ export function OnboardingFlow() {
                       <button
                         key={u.id}
                         onClick={() => toggleUseCase(u.id)}
+                        aria-pressed={isSelected}
+                        aria-label={`Toggle use case: ${u.name}`}
                         className={`flex flex-col text-left p-5 border transition-all duration-200 shadow-sm ${isSelected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-foreground/30'}`}
                       >
                         <div className="flex justify-between items-center mb-1">
-                          <span className="font-semibold text-foreground tracking-tight">{u.name}</span>
+                          <span className="font-semibold text-foreground tracking-tight font-sans">{u.name}</span>
                           {isSelected && <Check className="h-4 w-4 text-primary" />}
                         </div>
-                        <span className="text-sm text-muted-foreground leading-relaxed">{u.desc}</span>
+                        <span className="text-sm text-muted-foreground leading-relaxed font-sans">{u.desc}</span>
                       </button>
                     )
                   })}
                 </div>
-                <div className="flex gap-4 mt-8">
-                  <Button variant="outline" size="lg" onClick={handleBack} className="h-14 px-8 uppercase tracking-widest font-semibold border-border shadow-none">Back</Button>
+                <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    onClick={handleBack} 
+                    aria-label="Go back to previous step"
+                    className="h-14 px-8 uppercase tracking-widest font-semibold border-border shadow-none"
+                  >
+                    Back
+                  </Button>
                   <Button 
                     size="lg" 
                     onClick={handleNext} 
                     disabled={selectedUseCases.length === 0}
+                    aria-label="Initialize environment"
                     className="flex-1 h-14 uppercase tracking-widest font-semibold shadow-none"
                   >
                     Initialize Environment

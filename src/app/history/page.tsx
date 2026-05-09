@@ -7,12 +7,15 @@ import { AuditRecord } from "@/lib/audit/types";
 import Link from "next/link";
 import { ArrowRight, Clock, FileText, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<AuditRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
+    setHasMounted(true);
     const historyJson = localStorage.getItem("ledger_audit_history");
     if (historyJson) {
       try {
@@ -23,6 +26,8 @@ export default function HistoryPage() {
     }
     setLoading(false);
   }, []);
+
+  const isLoading = !hasMounted || loading;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
@@ -42,9 +47,17 @@ export default function HistoryPage() {
               </p>
             </div>
 
-            {loading ? (
-              <div className="py-20 text-center font-mono text-muted-foreground animate-pulse">
-                Accessing archives...
+            {isLoading ? (
+              <div className="border border-border bg-card shadow-sm divide-y divide-border overflow-hidden">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-4 px-8 py-8 items-center">
+                    <Skeleton className="col-span-3 h-8" />
+                    <Skeleton className="col-span-2 h-6" />
+                    <Skeleton className="col-span-2 h-4" />
+                    <Skeleton className="col-span-3 h-6" />
+                    <Skeleton className="col-span-2 h-6" />
+                  </div>
+                ))}
               </div>
             ) : history.length === 0 ? (
               <div className="py-20 border border-border bg-card p-12 text-center space-y-8">

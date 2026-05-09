@@ -14,18 +14,24 @@ export async function exportAuditToPDF(elementId: string, auditId: string) {
   element.classList.add("exporting-pdf");
 
   try {
+    // Wait for fonts to be ready
+    await document.fonts.ready;
+
     const canvas = await html2canvas(element, {
       scale: 2, // Higher resolution
       useCORS: true,
       backgroundColor: "#ffffff",
       logging: false,
+      allowTaint: true,
       onclone: (document) => {
-        // You can manipulate the cloned document here before it's captured
         const el = document.getElementById(elementId);
         if (el) {
           el.style.padding = "40px";
-          // Ensure backgrounds are solid for the PDF
           el.style.backgroundColor = "#ffffff";
+          // Ensure specific elements are visible in PDF
+          el.querySelectorAll(".bg-grid-pattern").forEach((node) => {
+            (node as HTMLElement).style.opacity = "0.05";
+          });
         }
       },
     });
