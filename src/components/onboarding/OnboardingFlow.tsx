@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { evaluateAuditData } from "@/lib/audit/engine";
 import { AuditRecord } from "@/lib/audit/types";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/client";
 
 const VENDORS = [
   { id: "openai", name: "OpenAI API", label: "GPT-4 / O1 Models" },
@@ -97,6 +97,7 @@ export function OnboardingFlow() {
 
     // 2. Persist to Supabase
     try {
+      const supabase = createClient();
       const { error: auditError } = await supabase
         .from("audits")
         .insert({

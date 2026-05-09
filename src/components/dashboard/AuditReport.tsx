@@ -11,7 +11,7 @@ import { AuditData, EngineResult, AuditRecord } from "@/lib/audit/types";
 import { exportAuditToPDF } from "@/lib/audit/export";
 import { Download, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/client";
 
 function SkeletonReport() {
   return (
@@ -85,6 +85,7 @@ export function AuditReport({ id }: { id?: string }) {
 
       // 2. Fallback to Supabase
       try {
+        const supabase = createClient();
         const { data: remoteData, error: remoteError } = await supabase
           .from("audits")
           .select("*")
