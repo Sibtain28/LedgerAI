@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/Container";
@@ -54,9 +55,11 @@ export function Hero() {
               AI consumption scales exponentially. Our audits identify orphaned tokens, duplicate models, and runaway API costs before they impact your runway.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-2">
-              <Button size="lg" className="h-14 px-8 text-sm uppercase tracking-widest font-semibold shadow-none">
-                Request an Audit <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link href="/onboarding">
+                <Button size="lg" className="w-full h-14 px-8 text-sm uppercase tracking-widest font-semibold shadow-none">
+                  Request an Audit <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
               <Button size="lg" variant="outline" className="h-14 px-8 text-sm uppercase tracking-widest font-semibold bg-transparent shadow-none border-foreground/20 hover:bg-muted/50">
                 View Sample Report
               </Button>

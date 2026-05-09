@@ -1,5 +1,6 @@
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function CTASection() {
   return (
@@ -13,9 +14,11 @@ export function CTASection() {
             Connect your API accounts securely. Get a precise ledger of your AI compute consumption in minutes.
           </p>
           <div className="flex flex-col sm:flex-row gap-5">
-            <Button size="lg" variant="secondary" className="h-14 px-10 text-sm uppercase tracking-widest font-bold bg-background text-foreground hover:bg-background/90 shadow-none">
-              Initialize Audit
-            </Button>
+            <Link href="/onboarding">
+              <Button size="lg" variant="secondary" className="w-full h-14 px-10 text-sm uppercase tracking-widest font-bold bg-background text-foreground hover:bg-background/90 shadow-none">
+                Initialize Audit
+              </Button>
+            </Link>
             <Button size="lg" variant="outline" className="h-14 px-10 text-sm uppercase tracking-widest font-bold bg-transparent border-background/20 text-background hover:bg-background/10 hover:text-background shadow-none">
               Read the Docs
             </Button>
