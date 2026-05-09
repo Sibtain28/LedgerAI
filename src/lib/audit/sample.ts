@@ -15,6 +15,7 @@ export const SAMPLE_AUDIT_RECORD: AuditRecord = {
     currentSpend: 12500,
     optimizedSpend: 8400,
     annualSavings: 49200,
+    monthlySavings: 4100,
     leakagePercent: 32.8,
     optScore: 67,
     executiveSummary: "Analysis of the current AI infrastructure stack reveals significant redundancy in coding assistance and seat allocation. The organization is currently dual-licensing Cursor and GitHub Copilot across the same engineering cohort, while over-provisioning ChatGPT Team seats for non-technical roles. API efficiency is moderately high, but lacking request caching pipelines for RAG workloads.",
@@ -23,25 +24,28 @@ export const SAMPLE_AUDIT_RECORD: AuditRecord = {
         id: "REC-101",
         title: "Consolidate Coding Assistants",
         reasoning: "Detected 100% overlap between Cursor and GitHub Copilot. Consolidating to Cursor (preferred by engineering) will eliminate $19/seat/mo in redundant licensing.",
+        projectedSavingsModifier: 0.068,
         projected: 855,
         severity: "Critical",
-        confidence: "98%"
+        confidence: "Very High"
       },
       {
         id: "REC-102",
         title: "Rightsize Team Seats",
         reasoning: "22% of ChatGPT Team seats show zero active API usage over 30 days. Recommend downgrading to individual Plus seats for administrative roles.",
+        projectedSavingsModifier: 0.033,
         projected: 420,
-        severity: "Moderate",
-        confidence: "85%"
+        severity: "Medium",
+        confidence: "High"
       },
       {
         id: "REC-103",
         title: "Implement Semantic Caching",
         reasoning: "High volume of repetitive RAG queries detected. Implementing a semantic cache layer will reduce OpenAI API spend by approximately 15% through token reuse.",
+        projectedSavingsModifier: 0.15,
         projected: 1875,
         severity: "High",
-        confidence: "92%"
+        confidence: "High"
       }
     ],
     warnings: [
