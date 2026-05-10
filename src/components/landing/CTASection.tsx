@@ -19,9 +19,11 @@ export function CTASection() {
                 Initialize Audit
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="h-14 px-10 text-sm uppercase tracking-widest font-bold bg-transparent border-background/20 text-background hover:bg-background/10 hover:text-background shadow-none">
-              Read the Docs
-            </Button>
+            <Link href="https://github.com/Sibtain28/LedgerAI" target="_blank" rel="noopener noreferrer">
+              <Button size="lg" variant="outline" className="h-14 px-10 text-sm uppercase tracking-widest font-bold bg-transparent border-background/20 text-background hover:bg-background/10 hover:text-background shadow-none">
+                Read the Docs
+              </Button>
+            </Link>
           </div>
         </div>
       </Container>

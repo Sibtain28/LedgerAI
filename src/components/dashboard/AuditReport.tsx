@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { evaluateAuditData } from "@/lib/audit/engine";
 import { VENDOR_REGISTRY } from "@/lib/audit/config";
 import { AuditData, EngineResult, AuditRecord } from "@/lib/audit/types";
-import { exportAuditToPDF } from "@/lib/audit/export";
-import { Download, Loader2, Share2 } from "lucide-react";
+import { Loader2, Share2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { createClient } from "@/utils/supabase/client";
 import { SAMPLE_AUDIT_ID, SAMPLE_AUDIT_RECORD } from "@/lib/audit/sample";
@@ -54,7 +53,6 @@ export function AuditReport({ id }: { id?: string }) {
   const [report, setReport] = useState<EngineResult | null>(null);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isExporting, setIsExporting] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
@@ -162,12 +160,6 @@ export function AuditReport({ id }: { id?: string }) {
     return () => { mounted = false; };
   }, [data, report]);
 
-  const handleDownload = async () => {
-    if (!currentId) return;
-    setIsExporting(true);
-    await exportAuditToPDF("audit-report-content", currentId);
-    setIsExporting(false);
-  };
 
   const handleShare = () => {
     if (!currentId) return;
@@ -213,6 +205,19 @@ export function AuditReport({ id }: { id?: string }) {
       </Container>
     );
   }
+  const VENDOR_LINKS: Record<string, string> = {
+    rec_coding_overlap: "https://cursor.com/pricing",
+    rec_cursor: "https://cursor.com/pricing",
+    rec_github_copilot: "https://github.com/features/copilot#pricing",
+    rec_claude: "https://www.anthropic.com/claude/pricing",
+    rec_chatgpt: "https://openai.com/chatgpt/pricing",
+    rec_anthropic: "https://www.anthropic.com/pricing",
+    rec_openai: "https://openai.com/api/pricing",
+    rec_gemini: "https://one.google.com/about/plans",
+    rec_windsurf: "https://windsurf.com/pricing",
+    rec_gemini_downgrade: "https://one.google.com/about/plans",
+    rec_general: "https://platform.openai.com/docs/guides/rate-limits",
+  };
 
   return (
     <div id="audit-report-content" className="pb-32 animate-in fade-in duration-700 bg-background">
@@ -227,24 +232,6 @@ export function AuditReport({ id }: { id?: string }) {
                   <span className="flex h-1.5 w-1.5 bg-primary mr-2"></span>
                   Audit {currentId} Complete
                 </div>
-                <Button 
-                  onClick={handleDownload}
-                  disabled={isExporting}
-                  variant="outline" 
-                  className="h-8 px-3 border-background/20 bg-background/10 text-background hover:bg-background hover:text-foreground text-[10px] font-mono font-bold uppercase tracking-widest transition-all rounded-none"
-                >
-                  {isExporting ? (
-                    <>
-                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-3 w-3" />
-                      Download Ledger Report
-                    </>
-                  )}
-                </Button>
                 {currentId && currentId !== SAMPLE_AUDIT_ID && (
                   <Button 
                     onClick={handleShare}
@@ -474,9 +461,15 @@ export function AuditReport({ id }: { id?: string }) {
                       {rec.projected.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}<span className="text-sm font-sans font-normal text-muted-foreground">/mo</span>
                     </p>
                   </div>
-                  <Button variant="outline" className="uppercase tracking-widest text-xs font-bold shadow-none rounded-none border-border group-hover:bg-primary/5 group-hover:text-primary transition-colors h-10">
-                    Execute Remediation
-                  </Button>
+                  <a 
+                    href={VENDOR_LINKS[rec.id] || "https://credex.rocks"} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="outline" className="uppercase tracking-widest text-xs font-bold shadow-none rounded-none border-border group-hover:bg-primary/5 group-hover:text-primary transition-colors h-10">
+                      Execute Remediation ↗
+                    </Button>
+                  </a>
                 </div>
               </div>
             ))}
@@ -495,12 +488,16 @@ export function AuditReport({ id }: { id?: string }) {
                 Credex sources discounted AI credits from companies that overforecast. Your audit qualifies for a consultation.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                <Button size="lg" className="h-14 px-8 uppercase tracking-widest font-bold shadow-none bg-background text-foreground hover:bg-background/90 text-sm">
-                  Book a Credex Consultation <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button size="lg" variant="outline" className="h-14 px-8 uppercase tracking-widest font-bold shadow-none border-border/20 text-background hover:bg-background/10 text-sm">
-                  Learn How Credits Work
-                </Button>
+                <Link href="https://credex.rocks" target="_blank" rel="noopener noreferrer">
+                  <Button size="lg" className="h-14 px-8 uppercase tracking-widest font-bold shadow-none bg-background text-foreground hover:bg-background/90 text-sm w-full sm:w-auto">
+                    Book a Credex Consultation <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="https://credex.rocks" target="_blank" rel="noopener noreferrer">
+                  <Button size="lg" variant="outline" className="h-14 px-8 uppercase tracking-widest font-bold shadow-none border-border/20 text-background hover:bg-background/10 text-sm w-full sm:w-auto">
+                    Learn How Credits Work
+                  </Button>
+                </Link>
               </div>
             </div>
           </Container>

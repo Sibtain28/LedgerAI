@@ -1,6 +1,3 @@
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-
 /**
  * Captures a DOM element and exports it as a professional PDF.
  * @param elementId The ID of the container element to capture.
@@ -14,6 +11,10 @@ export async function exportAuditToPDF(elementId: string, auditId: string) {
   element.classList.add("exporting-pdf");
 
   try {
+    // Dynamically import to prevent SSR issues and ensure correct module resolution
+    const html2canvas = (await import("html2canvas")).default;
+    const { jsPDF } = await import("jspdf");
+
     // Wait for fonts to be ready
     await document.fonts.ready;
 
@@ -23,8 +24,8 @@ export async function exportAuditToPDF(elementId: string, auditId: string) {
       backgroundColor: "#ffffff",
       logging: false,
       allowTaint: true,
-      onclone: (document) => {
-        const el = document.getElementById(elementId);
+      onclone: (clonedDoc) => {
+        const el = clonedDoc.getElementById(elementId);
         if (el) {
           el.style.padding = "40px";
           el.style.backgroundColor = "#ffffff";
@@ -47,6 +48,7 @@ export async function exportAuditToPDF(elementId: string, auditId: string) {
     pdf.save(`LedgerAI_Audit_${auditId}_${new Date().toISOString().split("T")[0]}.pdf`);
   } catch (error) {
     console.error("PDF Export failed:", error);
+    alert("There was an issue generating the PDF. Please try again.");
   } finally {
     element.classList.remove("exporting-pdf");
   }

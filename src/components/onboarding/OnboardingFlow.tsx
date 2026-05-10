@@ -242,7 +242,7 @@ export function OnboardingFlow() {
                   <div className="space-y-3">
                     <label className="text-sm font-semibold tracking-tight text-foreground uppercase">Team Size</label>
                     <select
-                      className="flex h-14 w-full border border-border bg-background px-3 py-2 text-lg font-mono placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-14 w-full border border-border bg-background px-3 py-2 text-lg font-sans placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={teamSize}
                       onChange={e => setTeamSize(e.target.value)}
                     >
