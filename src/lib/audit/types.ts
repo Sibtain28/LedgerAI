@@ -1,8 +1,21 @@
+export interface ToolEntry {
+  toolId: string;
+  plan: string;
+  seats: number;
+  monthlySpend: number;
+}
+
 export interface AuditData {
   vendors: string[];
   spend: number;
   seats: number;
   useCases: string[];
+  tools?: ToolEntry[];
+  totalSpend?: number;
+  teamSize?: string;
+  companyName?: string;
+  email?: string;
+  role?: string;
 }
 
 export type Severity = "Low" | "Medium" | "High" | "Critical";
@@ -43,6 +56,17 @@ export interface EngineResult {
   recommendations: (Recommendation & { projected: number })[];
   warnings: string[];
   executiveSummary: string;
+  toolResults?: {
+    toolId: string;
+    name: string;
+    plan: string;
+    seats: number;
+    grossSpend: number;
+    targetOptimized: number;
+    savings: number;
+    finding: string;
+    action: string;
+  }[];
 }
 
 export interface AuditRecord {

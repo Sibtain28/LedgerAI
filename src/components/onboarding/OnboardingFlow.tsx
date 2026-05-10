@@ -3,22 +3,22 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Check, Terminal, Cpu, Users, Database } from "lucide-react";
+import { ArrowRight, Check, Terminal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { evaluateAuditData } from "@/lib/audit/engine";
-import { AuditRecord } from "@/lib/audit/types";
+import { AuditRecord, ToolEntry } from "@/lib/audit/types";
 import { createClient } from "@/utils/supabase/client";
 
-const VENDORS = [
-  { id: "openai", name: "OpenAI API", label: "GPT-4 / O1 Models" },
-  { id: "anthropic", name: "Anthropic API", label: "Claude 3 Family" },
-  { id: "aws", name: "AWS Bedrock", label: "Nova / Titan" },
-  { id: "gcp", name: "Google Cloud", label: "Gemini / Vertex" },
-  { id: "cursor", name: "Cursor", label: "AI Code Editor" },
-  { id: "github_copilot", name: "GitHub Copilot", label: "IDE Extension" },
-  { id: "chatgpt_team", name: "ChatGPT Team", label: "Enterprise Chat" },
-  { id: "chatgpt_plus", name: "ChatGPT Plus", label: "Consumer Chat" }
+const TOOLS_OPTIONS = [
+  { id: "cursor", name: "Cursor", plans: ["Hobby", "Pro", "Business", "Enterprise"] },
+  { id: "github_copilot", name: "GitHub Copilot", plans: ["Individual", "Business", "Enterprise"] },
+  { id: "claude", name: "Claude (Anthropic)", plans: ["Free", "Pro", "Max", "Team", "Enterprise"] },
+  { id: "chatgpt", name: "ChatGPT (OpenAI)", plans: ["Plus", "Team", "Enterprise"] },
+  { id: "anthropic", name: "Anthropic API Direct", plans: ["API Direct"] },
+  { id: "openai", name: "OpenAI API Direct", plans: ["API Direct"] },
+  { id: "gemini", name: "Gemini", plans: ["Pro", "Ultra", "API"] },
+  { id: "windsurf", name: "Windsurf", plans: ["Free", "Pro", "Teams"] }
 ];
 
 const USE_CASES = [
@@ -32,30 +32,58 @@ export function OnboardingFlow() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   // Form State
-  const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
-  const [monthlySpend, setMonthlySpend] = useState("");
-  const [seats, setSeats] = useState("");
+  const [teamSize, setTeamSize] = useState("");
   const [selectedUseCases, setSelectedUseCases] = useState<string[]>([]);
+  const [companyName, setCompanyName] = useState("");
+  
+  const [tools, setTools] = useState<ToolEntry[]>([
+    { toolId: "", plan: "", seats: 1, monthlySpend: 0 }
+  ]);
+  
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
 
   // Animation State for Step 4
   const [analysisStep, setAnalysisStep] = useState(0);
 
+  // Load draft from local storage
+  useEffect(() => {
+    const draft = localStorage.getItem("ledger_onboarding_draft");
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        if (parsed.step) setStep(parsed.step);
+        if (parsed.teamSize) setTeamSize(parsed.teamSize);
+        if (parsed.selectedUseCases) setSelectedUseCases(parsed.selectedUseCases);
+        if (parsed.companyName) setCompanyName(parsed.companyName);
+        if (parsed.tools) setTools(parsed.tools);
+        if (parsed.email) setEmail(parsed.email);
+        if (parsed.role) setRole(parsed.role);
+      } catch(e) {}
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save draft whenever state changes
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("ledger_onboarding_draft", JSON.stringify({
+        step, teamSize, selectedUseCases, companyName, tools, email, role
+      }));
+    }
+  }, [step, teamSize, selectedUseCases, companyName, tools, email, role, isLoaded]);
+
   const handleNext = () => {
     setDirection(1);
-    setStep((s) => Math.min(s + 1, 5));
+    setStep((s) => Math.min(s + 1, 6));
   };
 
   const handleBack = () => {
     setDirection(-1);
     setStep((s) => Math.max(s - 1, 1));
-  };
-
-  const toggleVendor = (id: string) => {
-    setSelectedVendors(prev => 
-      prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
-    );
   };
 
   const toggleUseCase = (id: string) => {
@@ -64,16 +92,45 @@ export function OnboardingFlow() {
     );
   };
 
-  // Derived calculations for right pane
-  const parsedSpend = parseInt(monthlySpend.replace(/[^0-9]/g, "")) || 0;
-  const estimatedLeakage = parsedSpend > 0 ? (parsedSpend * 0.32).toLocaleString("en-US", { style: "currency", currency: "USD" }) : "$0.00";
+  const addTool = () => {
+    setTools(prev => [...prev, { toolId: "", plan: "", seats: 1, monthlySpend: 0 }]);
+  };
+
+  const removeTool = (index: number) => {
+    setTools(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateTool = (index: number, field: keyof ToolEntry, value: any) => {
+    setTools(prev => {
+      const newTools = [...prev];
+      newTools[index] = { ...newTools[index], [field]: value };
+      
+      // Auto-reset plan if toolId changes
+      if (field === "toolId") {
+        newTools[index].plan = "";
+      }
+      return newTools;
+    });
+  };
+
+  // Derived calculations
+  const vendors = Array.from(new Set(tools.map(t => t.toolId).filter(Boolean)));
+  const totalSpend = tools.reduce((sum, t) => sum + (Number(t.monthlySpend) || 0), 0);
+  const maxSeats = tools.reduce((max, t) => Math.max(max, Number(t.seats) || 0), 0);
+  const estimatedLeakage = totalSpend > 0 ? (totalSpend * 0.32).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) : "$0";
 
   const handleFinish = async () => {
     const auditData = {
-      vendors: selectedVendors,
-      spend: parsedSpend,
-      seats: parseInt(seats) || 0,
-      useCases: selectedUseCases
+      vendors,
+      spend: totalSpend,
+      seats: maxSeats,
+      useCases: selectedUseCases,
+      tools,
+      totalSpend,
+      teamSize,
+      companyName,
+      email,
+      role
     };
 
     const auditId = `LDG-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -111,13 +168,20 @@ export function OnboardingFlow() {
           .from("leads")
           .insert({
             audit_id: auditId,
-            metadata: { source: "onboarding_flow" }
+            metadata: { 
+              source: "onboarding_flow",
+              email,
+              role,
+              companyName
+            }
           });
       }
     } catch (e) {
       console.error("Failed to persist to Supabase:", e);
     }
     
+    // Clear draft and proceed
+    localStorage.removeItem("ledger_onboarding_draft");
     router.push(`/dashboard?id=${auditId}`);
   };
 
@@ -141,6 +205,9 @@ export function OnboardingFlow() {
     }
   }, [step]);
 
+  // Make sure hydration matches client
+  if (!isLoaded) return null;
+
   return (
     <div className="flex-1 flex flex-col lg:flex-row bg-background">
       {/* LEFT PANE - Input Flow */}
@@ -158,7 +225,7 @@ export function OnboardingFlow() {
             {/* Progress indicators */}
             <div className="flex items-center gap-2 mb-12">
               {[1, 2, 3].map(i => (
-                <div key={i} className={`h-1.5 flex-1 transition-colors duration-500 ${step >= i ? 'bg-primary' : 'bg-muted'}`} />
+                <div key={i} className={`h-1.5 flex-1 transition-colors duration-500 ${step >= i || (step > 3 && i === 3) ? 'bg-primary' : 'bg-muted'}`} />
               ))}
             </div>
           </div>
@@ -167,33 +234,64 @@ export function OnboardingFlow() {
             {step === 1 && (
               <div className="space-y-8">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tighter text-foreground">Core Infrastructure</h1>
-                  <p className="mt-4 text-muted-foreground">Select the intelligence providers currently in your stack. We'll cross-reference these against your billing APIs.</p>
+                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tighter text-foreground">Team Profile</h1>
+                  <p className="mt-4 text-muted-foreground">Help us calibrate our baseline to your organization.</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {VENDORS.map(v => {
-                    const isSelected = selectedVendors.includes(v.id);
-                    return (
-                      <button
-                        key={v.id}
-                        onClick={() => toggleVendor(v.id)}
-                        aria-pressed={isSelected}
-                        aria-label={`Toggle ${v.name}`}
-                        className={`flex flex-col text-left p-5 border transition-all duration-200 shadow-sm ${isSelected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-foreground/30'}`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="font-semibold text-foreground tracking-tight">{v.name}</span>
-                          {isSelected && <Check className="h-4 w-4 text-primary" />}
-                        </div>
-                        <span className="text-xs font-mono text-muted-foreground">{v.label}</span>
-                      </button>
-                    )
-                  })}
+
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold tracking-tight text-foreground uppercase">Team Size</label>
+                    <select
+                      className="flex h-14 w-full border border-border bg-background px-3 py-2 text-lg font-mono placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={teamSize}
+                      onChange={e => setTeamSize(e.target.value)}
+                    >
+                      <option value="" disabled>Select team size...</option>
+                      <option value="1-5">1-5</option>
+                      <option value="6-15">6-15</option>
+                      <option value="16-50">16-50</option>
+                      <option value="51-200">51-200</option>
+                      <option value="200+">200+</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold tracking-tight text-foreground uppercase">Primary Use Cases</label>
+                    <div className="grid grid-cols-1 gap-4">
+                      {USE_CASES.map(u => {
+                        const isSelected = selectedUseCases.includes(u.id);
+                        return (
+                          <button
+                            key={u.id}
+                            onClick={() => toggleUseCase(u.id)}
+                            className={`flex flex-col text-left p-4 border transition-all duration-200 shadow-sm ${isSelected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-foreground/30'}`}
+                          >
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-semibold text-foreground tracking-tight font-sans">{u.name}</span>
+                              {isSelected && <Check className="h-4 w-4 text-primary" />}
+                            </div>
+                            <span className="text-sm text-muted-foreground leading-relaxed font-sans">{u.desc}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold tracking-tight text-foreground uppercase">Company (optional)</label>
+                    <Input 
+                      placeholder="Acme Corp" 
+                      className="h-14 text-lg font-mono placeholder:text-muted-foreground/50 border-border"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                    />
+                  </div>
                 </div>
+
                 <Button 
                   size="lg" 
                   onClick={handleNext} 
-                  disabled={selectedVendors.length === 0}
+                  disabled={!teamSize || selectedUseCases.length === 0}
                   className="w-full h-14 uppercase tracking-widest font-semibold mt-8 shadow-none"
                 >
                   Continue <ArrowRight className="ml-2 h-4 w-4" />
@@ -204,40 +302,99 @@ export function OnboardingFlow() {
             {step === 2 && (
               <div className="space-y-8">
                 <div>
-                  <h1 className="text-3xl font-semibold tracking-tighter text-foreground">Scale & Spend</h1>
-                  <p className="mt-4 text-muted-foreground">Quantify your current consumption to calibrate the anomaly detection baseline.</p>
+                  <h1 className="text-3xl font-semibold tracking-tighter text-foreground">AI Tools Inventory</h1>
+                  <p className="mt-4 text-muted-foreground">List the AI tools your team uses. We'll cross-reference these to identify overlaps.</p>
                 </div>
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <label className="text-sm font-semibold tracking-tight text-foreground uppercase">Estimated Monthly Spend (USD)</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-muted-foreground">$</span>
-                      <Input 
-                        type="text" 
-                        placeholder="15,000" 
-                        className="pl-8 h-14 text-lg font-mono placeholder:text-muted-foreground/50 border-border"
-                        value={monthlySpend}
-                        onChange={(e) => setMonthlySpend(e.target.value)}
-                      />
+
+                <div className="space-y-4">
+                  {tools.map((tool, index) => (
+                    <div key={index} className="flex flex-col gap-3 p-4 border border-border bg-card shadow-sm relative">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-semibold uppercase text-muted-foreground">Tool {index + 1}</span>
+                        {tools.length > 1 && (
+                          <button onClick={() => removeTool(index)} className="text-muted-foreground hover:text-destructive p-1" title="Remove tool">
+                            ×
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold tracking-tight uppercase">Tool</label>
+                          <select
+                            className="flex h-10 w-full border border-border bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground/50"
+                            value={tool.toolId}
+                            onChange={(e) => updateTool(index, "toolId", e.target.value)}
+                          >
+                            <option value="" disabled>Select tool...</option>
+                            {TOOLS_OPTIONS.map(opt => (
+                              <option key={opt.id} value={opt.id}>{opt.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold tracking-tight uppercase">Plan</label>
+                          <select
+                            className="flex h-10 w-full border border-border bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground/50 disabled:opacity-50"
+                            value={tool.plan}
+                            onChange={(e) => updateTool(index, "plan", e.target.value)}
+                            disabled={!tool.toolId}
+                          >
+                            <option value="" disabled>Select plan...</option>
+                            {tool.toolId && TOOLS_OPTIONS.find(t => t.id === tool.toolId)?.plans.map(plan => (
+                              <option key={plan} value={plan}>{plan}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold tracking-tight uppercase">Seats</label>
+                          <Input 
+                            type="number" 
+                            min="1"
+                            placeholder="1" 
+                            className="h-10 text-sm font-mono border-border"
+                            value={tool.seats || ""}
+                            onChange={(e) => updateTool(index, "seats", parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold tracking-tight uppercase">$/mo</label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-muted-foreground text-sm">$</span>
+                            <Input 
+                              type="number" 
+                              placeholder="0" 
+                              className="pl-7 h-10 text-sm font-mono border-border"
+                              value={tool.monthlySpend || ""}
+                              onChange={(e) => updateTool(index, "monthlySpend", parseInt(e.target.value) || 0)}
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-sm font-semibold tracking-tight text-foreground uppercase">Active Engineering Seats</label>
-                    <Input 
-                      type="number" 
-                      placeholder="45" 
-                      className="h-14 text-lg font-mono placeholder:text-muted-foreground/50 border-border"
-                      value={seats}
-                      onChange={(e) => setSeats(e.target.value)}
-                    />
+                  ))}
+                  
+                  <Button variant="outline" onClick={addTool} className="w-full border-dashed border-2 border-border shadow-none py-6 text-muted-foreground hover:text-foreground">
+                    + Add Tool
+                  </Button>
+
+                  <div className="pt-4 flex justify-between items-center border-t border-border mt-4">
+                    <span className="font-semibold uppercase tracking-tight">Total Monthly Spend</span>
+                    <span className="text-xl font-bold font-mono text-primary">${totalSpend.toLocaleString()}</span>
                   </div>
                 </div>
+
                 <div className="flex gap-4 mt-8">
                   <Button variant="outline" size="lg" onClick={handleBack} className="h-14 px-8 uppercase tracking-widest font-semibold border-border shadow-none">Back</Button>
                   <Button 
                     size="lg" 
                     onClick={handleNext} 
-                    disabled={!monthlySpend || !seats}
+                    disabled={!tools.every(t => t.toolId && t.plan && t.seats > 0 && t.monthlySpend > 0)}
                     className="flex-1 h-14 uppercase tracking-widest font-semibold shadow-none"
                   >
                     Continue
@@ -249,47 +406,44 @@ export function OnboardingFlow() {
             {step === 3 && (
               <div className="space-y-8">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tighter text-foreground font-sans">Primary Use Cases</h1>
-                  <p className="mt-4 text-muted-foreground font-sans">How is your compute primarily distributed? This helps us identify caching optimization opportunities.</p>
+                  <h1 className="text-3xl font-semibold tracking-tighter text-foreground">Review Scope</h1>
+                  <p className="mt-4 text-muted-foreground">Verify your entered tooling stack before initializing the engine.</p>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
-                  {USE_CASES.map(u => {
-                    const isSelected = selectedUseCases.includes(u.id);
-                    return (
-                      <button
-                        key={u.id}
-                        onClick={() => toggleUseCase(u.id)}
-                        aria-pressed={isSelected}
-                        aria-label={`Toggle use case: ${u.name}`}
-                        className={`flex flex-col text-left p-5 border transition-all duration-200 shadow-sm ${isSelected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-foreground/30'}`}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-semibold text-foreground tracking-tight font-sans">{u.name}</span>
-                          {isSelected && <Check className="h-4 w-4 text-primary" />}
-                        </div>
-                        <span className="text-sm text-muted-foreground leading-relaxed font-sans">{u.desc}</span>
-                      </button>
-                    )
-                  })}
+
+                <div className="border border-border bg-card shadow-sm overflow-hidden">
+                  <div className="grid grid-cols-12 gap-2 p-3 border-b border-border bg-muted/30 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="col-span-5">Tool</div>
+                    <div className="col-span-3">Plan</div>
+                    <div className="col-span-2 text-right">Seats</div>
+                    <div className="col-span-2 text-right">$/mo</div>
+                  </div>
+                  
+                  <div className="divide-y divide-border">
+                    {tools.map((t, i) => (
+                      <div key={i} className="grid grid-cols-12 gap-2 p-3 text-sm font-mono items-center">
+                        <div className="col-span-5 truncate">{TOOLS_OPTIONS.find(opt => opt.id === t.toolId)?.name || t.toolId}</div>
+                        <div className="col-span-3 truncate text-muted-foreground">{t.plan}</div>
+                        <div className="col-span-2 text-right">{t.seats}</div>
+                        <div className="col-span-2 text-right">${t.monthlySpend.toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="grid grid-cols-12 gap-2 p-4 bg-muted/10 font-bold border-t border-border border-double border-t-4">
+                    <div className="col-span-8 text-right uppercase tracking-wider text-sm">Total</div>
+                    <div className="col-span-2 text-right font-mono">{maxSeats}</div>
+                    <div className="col-span-2 text-right font-mono text-primary">${totalSpend.toLocaleString()}</div>
+                  </div>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4 mt-8">
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    onClick={handleBack} 
-                    aria-label="Go back to previous step"
-                    className="h-14 px-8 uppercase tracking-widest font-semibold border-border shadow-none"
-                  >
-                    Back
-                  </Button>
+
+                <div className="flex gap-4 mt-8">
+                  <Button variant="outline" size="lg" onClick={handleBack} className="h-14 px-8 uppercase tracking-widest font-semibold border-border shadow-none">Back</Button>
                   <Button 
                     size="lg" 
                     onClick={handleNext} 
-                    disabled={selectedUseCases.length === 0}
-                    aria-label="Initialize environment"
                     className="flex-1 h-14 uppercase tracking-widest font-semibold shadow-none"
                   >
-                    Initialize Environment
+                    Run Audit <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -309,6 +463,72 @@ export function OnboardingFlow() {
             )}
 
             {step === 5 && (
+              <div className="space-y-8 py-10 animate-in fade-in zoom-in duration-500">
+                <div>
+                  <h1 className="text-4xl font-semibold tracking-tighter text-foreground leading-[1.1]">
+                    Your audit is ready.
+                  </h1>
+                  <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+                    Enter your email to view results and receive your report.
+                  </p>
+                </div>
+                
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold tracking-tight uppercase">Email</label>
+                    <Input 
+                      type="email" 
+                      placeholder="you@company.com" 
+                      className="h-12 border-border font-mono"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold tracking-tight uppercase">Company (optional)</label>
+                    <Input 
+                      placeholder="Acme Corp" 
+                      className="h-12 border-border font-mono"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold tracking-tight uppercase">Role</label>
+                    <select
+                      className="flex h-12 w-full border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 font-mono"
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                    >
+                      <option value="" disabled>Select role...</option>
+                      <option value="Founder/CEO">Founder/CEO</option>
+                      <option value="CTO/Engineering Lead">CTO/Engineering Lead</option>
+                      <option value="CFO/Finance">CFO/Finance</option>
+                      <option value="Engineering Manager">Engineering Manager</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <Button 
+                    size="lg" 
+                    onClick={handleNext}
+                    disabled={!email || !role}
+                    className="w-full h-14 uppercase tracking-widest font-bold shadow-none bg-foreground text-background hover:bg-foreground/90"
+                  >
+                    View My Audit <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center mt-4">
+                    No spam. High-savings audits may receive a note from Credex.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {step === 6 && (
               <div className="space-y-8 py-10">
                 <div>
                   <div className="inline-flex items-center border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-mono font-bold text-primary mb-6 uppercase tracking-widest">
@@ -344,18 +564,18 @@ export function OnboardingFlow() {
           <div className="relative w-full max-w-md bg-background border border-border shadow-2xl overflow-hidden">
             <div className="p-5 border-b border-border bg-card flex justify-between items-center">
               <span className="text-xs font-mono font-bold text-foreground tracking-[0.2em] uppercase">Audit Scope Profile</span>
-              <span className="text-xs font-mono text-muted-foreground">ID: LDG-{Math.floor(Math.random() * 10000)}</span>
+              <span className="text-xs font-mono text-muted-foreground">ID: LDG-PENDING</span>
             </div>
             
             <div className="p-8 space-y-8 font-mono text-sm">
               <div className="space-y-2">
                 <div className="text-muted-foreground uppercase tracking-wider text-xs">Monitored Vendors</div>
-                {selectedVendors.length === 0 ? (
+                {vendors.length === 0 ? (
                   <div className="text-muted opacity-50 italic">Awaiting selection...</div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {selectedVendors.map(v => (
-                      <span key={v} className="bg-muted px-2 py-1 border border-border text-foreground">{VENDORS.find(x => x.id === v)?.name}</span>
+                    {vendors.map(v => (
+                      <span key={v} className="bg-muted px-2 py-1 border border-border text-foreground">{TOOLS_OPTIONS.find(x => x.id === v)?.name || v}</span>
                     ))}
                   </div>
                 )}
@@ -365,13 +585,13 @@ export function OnboardingFlow() {
                 <div className="space-y-1">
                   <div className="text-muted-foreground uppercase tracking-wider text-xs mb-2">Mo. Spend</div>
                   <div className="text-xl font-bold tracking-tight text-foreground">
-                    {parsedSpend > 0 ? `$${parsedSpend.toLocaleString()}` : "---"}
+                    {totalSpend > 0 ? `$${totalSpend.toLocaleString()}` : "---"}
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-muted-foreground uppercase tracking-wider text-xs mb-2">Active Seats</div>
                   <div className="text-xl font-bold tracking-tight text-foreground">
-                    {seats || "---"}
+                    {maxSeats || "---"}
                   </div>
                 </div>
               </div>
@@ -394,7 +614,7 @@ export function OnboardingFlow() {
 
               <div className="pt-8 mt-8 border-t border-border bg-primary/5 -mx-8 px-8 pb-8 -mb-8 flex flex-col justify-between h-32">
                 <div className="text-muted-foreground uppercase tracking-wider text-xs">Est. Monthly Leakage (32% avg)</div>
-                <div className={`text-3xl font-bold tracking-tight ${parsedSpend > 0 ? 'text-primary' : 'text-muted opacity-30'}`}>
+                <div className={`text-3xl font-bold tracking-tight ${totalSpend > 0 ? 'text-primary' : 'text-muted opacity-30'}`}>
                   {estimatedLeakage}
                 </div>
               </div>
@@ -415,7 +635,7 @@ export function OnboardingFlow() {
                 {analysisStep > 0 && (
                   <div className="flex items-start text-muted">
                     <span className="mr-3 text-primary font-bold">{'>'}</span>
-                    <span>Reconciling tool stack [{selectedVendors.join(", ")}]... OK</span>
+                    <span>Reconciling tool stack [{vendors.length} vendors]... OK</span>
                   </div>
                 )}
                 {analysisStep > 1 && (

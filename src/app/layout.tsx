@@ -13,8 +13,20 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LedgerAI | Financial Auditing",
-  description: "Advanced financial auditing and ledger management.",
+  title: "LedgerAI | AI Spend Auditor",
+  description: "Free AI spend audit for startups. Find out where you're overspending on Cursor, ChatGPT, Claude, Copilot and more.",
+  metadataBase: new URL(`https://${process.env.NEXT_PUBLIC_APP_URL || "ledger-ai-psi.vercel.app"}`),
+  openGraph: {
+    title: "LedgerAI — Free AI Spend Audit",
+    description: "Find out where your team overspends on AI tools. Takes 2 minutes. Free.",
+    siteName: "LedgerAI",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LedgerAI — Free AI Spend Audit",
+    description: "Find out where your team overspends on AI tools. Takes 2 minutes. Free.",
+  },
 };
 
 export default function RootLayout({
