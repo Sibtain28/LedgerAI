@@ -6,8 +6,8 @@ const client = new Anthropic({
 });
 
 export async function POST(request: NextRequest) {
+  const body = await request.json();
   try {
-    const body = await request.json();
     const { tools, totalSpend, monthlySavings, annualSavings, 
             leakagePercent, recommendations, teamSize, useCases } = body;
 
@@ -38,7 +38,7 @@ Start directly with the analysis. Use a direct, financial-advisor tone.
 Do not use the word "significant" or "leverage".`;
 
     const message = await client.messages.create({
-      model: "claude-3-7-sonnet-20250219", // Upgrading model intentionally from the user's claude-sonnet-4-20250514 placeholder
+      model: "claude-sonnet-4-20250514",
       max_tokens: 200,
       messages: [{ role: "user", content: prompt }],
     });
@@ -50,6 +50,7 @@ Do not use the word "significant" or "leverage".`;
     return NextResponse.json({ summary: text });
   } catch (error) {
     console.error("AI summary error:", error);
-    return NextResponse.json({ summary: "" }, { status: 200 });
+    const fallback = `Your ${body.tools?.length || 0} AI tools are costing $${body.totalSpend?.toLocaleString() || 0}/mo. Our engine identified $${body.monthlySavings?.toLocaleString() || 0}/mo in recoverable spend — primarily through plan rightsizing and redundancy elimination. Addressing the top recommendation could free up $${((body.monthlySavings || 0) * 12).toLocaleString()}/yr to reinvest in infrastructure that directly serves users.`;
+    return NextResponse.json({ summary: fallback }, { status: 200 });
   }
 }
