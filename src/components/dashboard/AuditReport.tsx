@@ -494,7 +494,7 @@ export function AuditReport({ id }: { id?: string }) {
                   </Button>
                 </Link>
                 <Link href="https://credex.rocks" target="_blank" rel="noopener noreferrer">
-                  <Button size="lg" variant="outline" className="h-14 px-8 uppercase tracking-widest font-bold shadow-none border-border/20 text-background hover:bg-background/10 text-sm w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="h-14 px-8 uppercase tracking-widest font-bold shadow-none border-border/20 bg-transparent text-background hover:bg-background/10 hover:text-background text-sm w-full sm:w-auto">
                     Learn How Credits Work
                   </Button>
                 </Link>
