@@ -8,7 +8,13 @@ Copilot, and more. Takes 2 minutes. No signup required to see results.
 
 ## Screenshots
 
-*(Drag and drop your 3 screenshots here using the GitHub web editor!)*
+<img width="1510" height="852" alt="Screenshot 2026-05-10 at 12 37 08 PM" src="https://github.com/user-attachments/assets/2a9708cc-a215-49e6-b1b9-ba1b7dfef4b3" />
+
+<img width="1512" height="853" alt="Screenshot 2026-05-10 at 12 37 49 PM" src="https://github.com/user-attachments/assets/6e293ee6-6d75-45ca-8f97-50a39f456ad5" />
+
+<img width="1512" height="855" alt="Screenshot 2026-05-10 at 12 38 11 PM" src="https://github.com/user-attachments/assets/7e533a61-e6e8-474a-9138-4c149a112085" />
+
+
 
 ## Who it's for
 
