@@ -8,11 +8,7 @@ Copilot, and more. Takes 2 minutes. No signup required to see results.
 
 ## Screenshots
 
-> Add 3+ screenshots here after deployment
-
-![Onboarding Form](docs/screenshot-onboarding.png)
-![Audit Dashboard](docs/screenshot-dashboard.png)
-![Share Page](docs/screenshot-share.png)
+*(Drag and drop your 3 screenshots here using the GitHub web editor!)*
 
 ## Who it's for
 
