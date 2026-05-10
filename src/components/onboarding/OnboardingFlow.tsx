@@ -155,11 +155,23 @@ export function OnboardingFlow() {
     // 2. Persist to Supabase
     try {
       const supabase = createClient();
+
+      const sanitizedData = {
+        vendors: auditData.vendors,
+        spend: auditData.spend,
+        seats: auditData.seats,
+        useCases: auditData.useCases,
+        tools: auditData.tools,
+        teamSize: auditData.teamSize,
+        totalSpend: auditData.totalSpend,
+        // deliberately excluded: email, role, companyName
+      };
+
       const { error: auditError } = await supabase
         .from("audits")
         .insert({
           id: auditId,
-          data: auditData,
+          data: sanitizedData,
           result: result
         });
 
